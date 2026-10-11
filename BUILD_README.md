@@ -138,7 +138,8 @@ distrobox enter orca-build --no-tty -- sudo apt install -y \
     libnotify-dev \
     libjemalloc-dev \
     libmpfr-dev \
-    libgmp-dev
+    libgmp-dev \
+    libtbb-dev
 
 # Generate UTF-8 locale
 distrobox enter orca-build --no-tty -- sudo locale-gen en_US.UTF-8
@@ -165,32 +166,36 @@ rm -rf flashnetwork
 
 ### Step 3.4: Clone Repository & Checkout Branch
 
+Clone the fork and checkout the `linux-build-changes` branch:
+
 ```bash
 cd ~/orca-flashforge
-git clone -b linux-fixes-1.7.15 https://github.com/THEBMOREJOKER/Orca-Flashforge.git source
+git clone -b linux-build-changes https://github.com/gcerkez/Orca-Flashforge.git source
 cd source
 ```
 
-### Step 3.5: Build Vendored Dependencies
+### Step 3.5: Run Easy Build (One-Command Build)
 
-Inside the container, build the bundled dependencies using Clang and `ld.lld`:
+Enter the container and run `./build_easy.sh`:
 
 ```bash
-distrobox enter orca-build --no-tty -- bash -c "
-  cd ~/orca-flashforge/source && \
-  ./build_linux.sh -drlL
-"
+distrobox enter orca-build
+cd ~/orca-flashforge/source
+./build_easy.sh
 ```
 
-### Step 3.6: Compile Orca-Flashforge & Bundle AppImage
+`build_easy.sh` automatically:
+- Checks build tools (`cmake`, `clang`, `lld`).
+- Auto-locates `libFlashNetwork.so` (checks `../libFlashNetwork.so`, `./libFlashNetwork.so`, and standard locations).
+- Detects if `./deps` needs to be built (builds dependencies automatically on first run; skips rebuild on subsequent runs).
+- Compiles the slicer and packages the AppImage with FlashNetwork bundled.
 
-Build the slicer and package the AppImage, passing the path to `libFlashNetwork.so` with `-N`:
-
+*(Optional)* You can also specify options explicitly:
 ```bash
-distrobox enter orca-build --no-tty -- bash -c "
-  cd ~/orca-flashforge/source && \
-  ./build_linux.sh -sirlL -N ~/orca-flashforge/libFlashNetwork.so
-"
+./build_easy.sh -N /path/to/libFlashNetwork.so   # Explicit FlashNetwork path
+./build_easy.sh --clean                         # Clean rebuild of slicer
+./build_easy.sh --clean-deps                    # Rebuild all dependencies
+./build_easy.sh -j 8                            # Limit parallel compilation cores
 ```
 
 ---

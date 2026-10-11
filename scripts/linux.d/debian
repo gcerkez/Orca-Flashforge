@@ -28,6 +28,16 @@ REQUIRED_DEV_PACKAGES=(
     ninja-build
     texinfo
     wget
+    libnotify-dev
+    libmpfr-dev
+    libgmp-dev
+    libjemalloc-dev
+    libtbb-dev
+    ccache
+    zstd
+    libwayland-dev
+    libxkbcommon-dev
+    wayland-protocols
 )
 
 if [[ -n "$UPDATE_LIB" ]]
