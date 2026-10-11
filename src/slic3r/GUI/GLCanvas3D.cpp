@@ -2188,6 +2188,10 @@ void GLCanvas3D::render_thumbnail(ThumbnailData &         thumbnail_data,
                                   bool                    for_picking,
                                   bool                    ban_light)
 {
+    if (!_set_current() || !wxGetApp().init_opengl())
+        return;
+    if (!is_initialized() && !init())
+        return;
     ModelObjectPtrs &model_objects = GUI::wxGetApp().model().objects;
     render_thumbnail(thumbnail_data, w, h, thumbnail_params, model_objects, m_volumes, camera_type, camera_view_angle_type, for_picking, ban_light);
 }
@@ -2203,6 +2207,10 @@ void GLCanvas3D::render_thumbnail(ThumbnailData &           thumbnail_data,
                                   bool                      for_picking,
                                   bool                      ban_light)
 {
+    if (!_set_current() || !wxGetApp().init_opengl())
+        return;
+    if (!is_initialized() && !init())
+        return;
     GLShaderProgram* shader = nullptr;
     if (for_picking)
         shader = wxGetApp().get_shader("flat");
@@ -2241,6 +2249,10 @@ void GLCanvas3D::render_thumbnail(ThumbnailData &                    thumbnail_d
                                   bool                               for_picking,
                                   bool                               ban_light)
 {
+    if (!_set_current() || !wxGetApp().init_opengl())
+        return;
+    if (!is_initialized() && !init())
+        return;
     GLShaderProgram *shader = wxGetApp().get_shader("thumbnail");
     switch (OpenGLManager::get_framebuffers_type()) {
         case OpenGLManager::EFramebufferType::Arb: {
@@ -6106,6 +6118,10 @@ void GLCanvas3D::render_thumbnail_internal(ThumbnailData& thumbnail_data, const 
                                            bool                               for_picking,
                                            bool                               ban_light)
 {
+    if (!glad_glViewport) {
+        BOOST_LOG_TRIVIAL(warning) << "render_thumbnail_internal: OpenGL not initialized (glad_glViewport is null)";
+        return;
+    }
     //BBS modify visible calc function
     static ColorRGBA                  curr_color;
     static const std::array<float, 4> orange = {0.923f, 0.504f, 0.264f, 1.0f};

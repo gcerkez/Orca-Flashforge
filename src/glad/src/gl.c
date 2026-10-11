@@ -2574,7 +2574,9 @@ static void* glad_gl_dlopen_handle(void) {
         "libGL-1.so",
   #endif
         "libGL.so.1",
-        "libGL.so"
+        "libGL.so",
+        "libOpenGL.so.0",
+        "libOpenGL.so"
     };
 #endif
 
@@ -2605,19 +2607,15 @@ static struct _glad_gl_userptr glad_gl_build_userptr(void *handle) {
 int gladLoaderLoadGL(void) {
     int version = 0;
     void *handle;
-    int did_load = 0;
     struct _glad_gl_userptr userptr;
 
-    did_load = _glad_GL_loader_handle == NULL;
     handle = glad_gl_dlopen_handle();
     if (handle) {
         userptr = glad_gl_build_userptr(handle);
 
         version = gladLoadGLUserPtr(glad_gl_get_proc, &userptr);
 
-        if (did_load) {
-            gladLoaderUnloadGL();
-        }
+        /* Keep the handle loaded so dlopen'd libGL / libOpenGL does not get unmapped */
     }
 
     return version;

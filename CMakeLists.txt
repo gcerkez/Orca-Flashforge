@@ -381,6 +381,7 @@ if (APPLE)
 endif ()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_definitions(-D__LINUX__)
     find_package(PkgConfig REQUIRED)
 
     if (CMAKE_VERSION VERSION_LESS "3.1")

@@ -2598,10 +2598,21 @@ void GUI_App::init_flashnetwork()
     std::string appPathWithSep = appFileName.GetPathWithSep().ToUTF8().data();
 #ifdef _WIN32
     std::string flashNetworkDllPath = appPathWithSep + "FlashNetwork.dll";
-#elif __APPLE__
+#elif defined(__APPLE__)
     std::string flashNetworkDllPath = appPathWithSep + "libFlashNetwork.dylib";
-#elif __LINUX__
+#elif defined(__linux__) || defined(__LINUX__)
     std::string flashNetworkDllPath = appPathWithSep + "libFlashNetwork.so";
+    if (!boost::filesystem::exists(flashNetworkDllPath)) {
+        boost::filesystem::path pluginPath = boost::filesystem::path(data_dir()) / "plugins" / "libFlashNetwork.so";
+        if (boost::filesystem::exists(pluginPath)) {
+            flashNetworkDllPath = pluginPath.string();
+        } else {
+            boost::filesystem::path resPath = boost::filesystem::path(resources_dir()) / "libFlashNetwork.so";
+            if (boost::filesystem::exists(resPath)) {
+                flashNetworkDllPath = resPath.string();
+            }
+        }
+    }
 #endif
     Slic3r::GUI::MultiComMgr::inst()->initalize(flashNetworkDllPath, data_dir());
 }
@@ -2847,7 +2858,7 @@ std::map<std::string, std::string> GUI_App::get_extra_header()
 #endif
 #elif defined(__APPLE__)
     extra_headers.insert(std::make_pair("X-BBL-OS-Type", "macos"));
-#elif defined(__LINUX__)
+#elif defined(__LINUX__) || defined(__linux__)
     extra_headers.insert(std::make_pair("X-BBL-OS-Type", "linux"));
 #endif
     int major = 0, minor = 0, micro = 0;
@@ -6967,7 +6978,7 @@ void GUI_App::check_new_version(bool show_tips, int by_user)
 #ifdef __APPLE__
     platform = "macos";
 #endif
-#ifdef __LINUX__
+#if defined(__LINUX__) || defined(__linux__)
     platform = "linux";
 #endif
     std::string query_params = (boost::format("?name=slicer&version=%1%&guide_version=%2%")

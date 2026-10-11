@@ -244,12 +244,12 @@ bool OpenGLManager::init_gl(bool popup_error)
         int version = 0;
 #if defined(__WXGTK__) && defined(wxHAS_EGL)
         if (is_running_on_wayland()) {
-            // On EGL/Wayland, gladLoaderLoadGL() dlopen's libGL.so then
-            // immediately dlclose's it. Since nothing else holds libGL.so
-            // open (unlike GLX where the context keeps it loaded), the
-            // library gets unmapped and all function pointers become invalid.
-            // Use eglGetProcAddress directly to avoid this.
+            // On EGL/Wayland, try eglGetProcAddress directly.
             version = gladLoadGL((GLADloadfunc)eglGetProcAddress);
+            if (version == 0) {
+                BOOST_LOG_TRIVIAL(warning) << "gladLoadGL with eglGetProcAddress failed, falling back to gladLoaderLoadGL";
+                version = gladLoaderLoadGL();
+            }
         } else
 #endif
         {
