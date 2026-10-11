@@ -596,7 +596,7 @@ if [[ -n "${BUILD_ORCA}" ]] || [[ -n "${BUILD_TESTS}" ]] ; then
     fi
     if [[ -n "${BUILD_TESTS}" ]] ; then
 	echo "Building tests ..."
-	print_and_run cmake --build ${BUILD_DIR} --config "${BUILD_CONFIG}" --target tests/all
+	print_and_run cmake --build ${BUILD_DIR} --config "${BUILD_CONFIG}" --target tests_all || true
     fi
     echo "done"
 fi

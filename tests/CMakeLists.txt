@@ -59,4 +59,14 @@ add_subdirectory(slic3rutils)
 add_subdirectory(fff_print)
 add_subdirectory(sla_print)
 
+add_custom_target(tests_all
+    DEPENDS
+        libslic3r_tests
+        fff_print_tests
+        sla_print_tests
+        slic3rutils_tests
+        libnest2d_tests
+        libvgcode_tests
+)
+
 

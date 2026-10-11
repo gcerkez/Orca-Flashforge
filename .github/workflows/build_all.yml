@@ -59,8 +59,8 @@ jobs:
       build-deps-only: ${{ inputs.build-deps-only || false }}
     secrets: inherit
   build_windows:
-    # Don't run scheduled builds on forks:
-    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
+    # Only run on upstream or when explicitly dispatched:
+    if: ${{ !cancelled() && (github.repository == 'OrcaSlicer/OrcaSlicer' || github.event_name == 'workflow_dispatch') }}
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: ${{ vars.SELF_HOSTED && 'orca-win-server' || 'windows-latest' }}
@@ -74,8 +74,8 @@ jobs:
         arch:
           - arm64
           - x86_64
-    # Don't run scheduled builds on forks:
-    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
+    # Only run on upstream or when explicitly dispatched:
+    if: ${{ !cancelled() && (github.repository == 'OrcaSlicer/OrcaSlicer' || github.event_name == 'workflow_dispatch') }}
     uses: ./.github/workflows/build_check_cache.yml
     with:
       os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-14' }}
@@ -86,7 +86,7 @@ jobs:
   build_macos_universal:
     name: Build macOS Universal
     needs: build_macos_arch
-    if: ${{ !cancelled() && needs.build_macos_arch.result == 'success' && !inputs.build-deps-only && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
+    if: ${{ !cancelled() && needs.build_macos_arch.result == 'success' && !inputs.build-deps-only && (github.repository == 'OrcaSlicer/OrcaSlicer' || github.event_name == 'workflow_dispatch') }}
     uses: ./.github/workflows/build_orca.yml
     with:
       os: ${{ vars.SELF_HOSTED && 'orca-macos-arm64' || 'macos-14' }}
@@ -158,8 +158,8 @@ jobs:
             runner: ubuntu-24.04
           - arch: aarch64
             runner: ubuntu-24.04-arm
-    # Don't run scheduled builds on forks; skip entirely on self-hosted runners
-    if: ${{ !cancelled() && !vars.SELF_HOSTED && (github.event_name != 'schedule' || github.repository == 'OrcaSlicer/OrcaSlicer') }}
+    # Only run on upstream or when explicitly dispatched; skip entirely on self-hosted runners
+    if: ${{ !cancelled() && !vars.SELF_HOSTED && (github.repository == 'OrcaSlicer/OrcaSlicer' || github.event_name == 'workflow_dispatch') }}
 
     runs-on: ${{ matrix.variant.runner }}
     env:
