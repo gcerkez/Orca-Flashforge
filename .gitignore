@@ -49,3 +49,5 @@ internal_docs/
 /flatpak-repo/
 /usr
 FLASHNETWORK*_*.dat
+libFlashNetwork.so
+resources/libFlashNetwork.so

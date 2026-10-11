@@ -139,6 +139,21 @@ if [[ -n "${CLEAN_DOCKER_IMAGE}" ]] && [[ -z "${USE_DOCKER}" ]] ; then
     exit 1
 fi
 
+if [[ -z "${NETWORK_LIBRARY_PATH}" ]] ; then
+    for candidate in \
+        "${SCRIPT_PATH}/libFlashNetwork.so" \
+        "${SCRIPT_PATH}/resources/libFlashNetwork.so" \
+        "$(dirname "${SCRIPT_PATH}")/libFlashNetwork.so" \
+        "${SCRIPT_PATH}/build/package/bin/libFlashNetwork.so" \
+        "${SCRIPT_PATH}/../libFlashNetwork.so" ; do
+        if [[ -f "${candidate}" ]] ; then
+            NETWORK_LIBRARY_PATH=$(readlink -f "${candidate}")
+            echo "Auto-detected FlashNetwork library: ${NETWORK_LIBRARY_PATH}"
+            break
+        fi
+    done
+fi
+
 if [[ -n "${NETWORK_LIBRARY_PATH}" ]] ; then
     if [[ ! -f "${NETWORK_LIBRARY_PATH}" ]] ; then
         echo "Error: network library not found: ${NETWORK_LIBRARY_PATH}"

@@ -27,6 +27,20 @@ while getopts ":ihN:R:" opt; do
   esac
 done
 
+if [[ -z "$NETWORK_LIBRARY_PATH" ]] ; then
+    for candidate in \
+        "libFlashNetwork.so" \
+        "../libFlashNetwork.so" \
+        "../resources/libFlashNetwork.so" \
+        "../../libFlashNetwork.so" \
+        "../../resources/libFlashNetwork.so" ; do
+        if [[ -f "$candidate" ]] ; then
+            NETWORK_LIBRARY_PATH=$(readlink -f "$candidate")
+            break
+        fi
+    done
+fi
+
 if [[ -n "$NETWORK_LIBRARY_PATH" ]] ; then
     if [[ ! -f "$NETWORK_LIBRARY_PATH" ]] ; then
         echo "Error: network library not found: $NETWORK_LIBRARY_PATH"
