@@ -6,7 +6,7 @@ This guide describes how to replicate the build of **Flash Studio / Orca-Flashfo
 
 ## 1. Overview of Fixes & PRs Incorporated
 
-The checked-out branch `linux-fixes-1.7.15` and our build incorporates the following bug fixes and enhancements:
+The branch `linux-build-changes` incorporates the following bug fixes, stability enhancements, and packaging tools:
 
 ### 1.1 Upstream PRs Incorporated
 1. **FlashNetwork 3.4.0 Support ([PR #69](https://github.com/FlashForge/Orca-Flashforge/pull/69))**:
