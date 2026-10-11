@@ -1359,19 +1359,15 @@ void MainFrame::update_title_colour_after_set_title()
 void MainFrame::show_option(bool show)
 {
     if (!show) {
-        if (m_slice_btn->IsShown()) {
-            m_slice_btn->Hide();
-            m_print_btn->Hide();
-            m_slice_option_btn->Hide();
-            m_print_option_btn->Hide();
+        if (m_slice_panel && m_slice_panel->IsShown()) {
+            m_slice_panel->Hide();
+            m_print_panel->Hide();
             Layout();
         }
     } else {
-        if (!m_slice_btn->IsShown()) {
-            m_slice_btn->Show();
-            m_print_btn->Show();
-            m_slice_option_btn->Show();
-            m_print_option_btn->Show();
+        if (m_slice_panel && !m_slice_panel->IsShown()) {
+            m_slice_panel->Show();
+            m_print_panel->Show();
             Layout();
         }
     }
@@ -1500,7 +1496,7 @@ void MainFrame::init_tabpanel() {
 
         //BBS add pages
     m_monitor = new MonitorPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-    m_monitor->SetBackgroundColour(*wxWHITE);
+    m_monitor->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#22262A") : wxColour("#F0F2F5"));
     m_tabpanel->AddPage(m_monitor, _L("Device"), std::string("tab_monitor_active"), std::string("tab_monitor_inactive"), false);
 
     m_printer_view = new PrinterWebView(m_tabpanel);
@@ -1564,7 +1560,7 @@ void MainFrame::show_device(bool bBBLPrinter) {
         // Create/insert monitor page
         if (!m_monitor) {
             m_monitor = new MonitorPanel(m_tabpanel, wxID_ANY, wxDefaultPosition, wxDefaultSize);
-            m_monitor->SetBackgroundColour(*wxWHITE);
+            m_monitor->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#22262A") : wxColour("#F0F2F5"));
         }
         m_monitor->Show(false);
         m_tabpanel->InsertPage(tpMonitor, m_monitor, _L("Device"), std::string("tab_monitor_active"), std::string("tab_monitor_inactive"));
@@ -2007,31 +2003,31 @@ wxBoxSizer* MainFrame::create_side_tools()
     m_slice_select = eSlicePlate;
     m_print_select = ePrintPlate;
 
-    auto slice_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTRANSPARENT_WINDOW);
-    auto print_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTRANSPARENT_WINDOW);
+    m_slice_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+    m_print_panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 
-    m_slice_btn = new SideButton(slice_panel, _L("Slice plate"), "");
-    m_slice_option_btn = new SideButton(slice_panel, "", "sidebutton_dropdown", 0, 14);
-    m_print_btn = new SideButton(print_panel, _L("Print plate"), "");
-    m_print_option_btn = new SideButton(print_panel, "", "sidebutton_dropdown", 0, 14);
+    m_slice_btn = new SideButton(m_slice_panel, _L("Slice plate"), "");
+    m_slice_option_btn = new SideButton(m_slice_panel, "", "sidebutton_dropdown", 0, 14);
+    m_print_btn = new SideButton(m_print_panel, _L("Print plate"), "");
+    m_print_option_btn = new SideButton(m_print_panel, "", "sidebutton_dropdown", 0, 14);
 
     auto slice_sizer = new wxBoxSizer(wxHORIZONTAL);
     slice_sizer->Add(m_slice_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     slice_sizer->Add(m_slice_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
-    slice_panel->SetSizer(slice_sizer);
+    m_slice_panel->SetSizer(slice_sizer);
 
     auto print_sizer = new wxBoxSizer(wxHORIZONTAL);
     print_sizer->Add(m_print_option_btn, 0, wxRIGHT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
     print_sizer->Add(m_print_btn, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, FromDIP(1));
-    print_panel->SetSizer(print_sizer);
+    m_print_panel->SetSizer(print_sizer);
 
     update_side_button_style();
     m_slice_option_btn->Enable();
     m_print_option_btn->Enable();
     //sizer->Add(FromDIP(15), 0, 0, 0, 0);
-    sizer->Add(slice_panel);
+    sizer->Add(m_slice_panel);
     sizer->Add(FromDIP(15), 0, 0, 0, 0);
-    sizer->Add(print_panel);
+    sizer->Add(m_print_panel);
     sizer->Add(FromDIP(19), 0, 0, 0, 0);
 
     sizer->Layout();
@@ -2055,12 +2051,12 @@ wxBoxSizer* MainFrame::create_side_tools()
 #ifndef __linux__
 // in linux plateform, the pop up will taker over the mouse event and make the slice button cannot handle click event
     // this pannel is used to trigger hover when button is disabled
-    slice_panel->Bind(wxEVT_ENTER_WINDOW, [this,try_hover_pop_up](auto& event) {
+    m_slice_panel->Bind(wxEVT_ENTER_WINDOW, [this,try_hover_pop_up](auto& event) {
         if(!m_slice_option_pop_up || !m_slice_option_pop_up->IsShown())
             try_hover_pop_up();
         });
 
-    slice_panel->Bind(wxEVT_LEAVE_WINDOW, [this](auto& event) {
+    m_slice_panel->Bind(wxEVT_LEAVE_WINDOW, [this](auto& event) {
         m_filament_group_popup->tryClose();
         });
 

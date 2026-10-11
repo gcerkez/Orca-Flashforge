@@ -16,11 +16,65 @@ wxDEFINE_EVENT(wxCUSTOMEVT_NOTEBOOK_SEL_CHANGED, wxCommandEvent);
 
 static StateColor notebook_tab_text_color(bool selected)
 {
-#ifdef __WXMSW__
-    if (Slic3r::GUI::wxGetApp().dark_mode())
-        return StateColor(std::pair{wxColour("#333333"), (int) StateColor::Normal});
-#endif
-    return StateColor(std::pair{selected ? wxColour(255, 255, 255) : wxColour(0, 0, 0), (int) StateColor::Normal});
+    StateColor sc;
+    if (selected) {
+        // Selected tab text: crisp, bright white
+        sc.append(wxColour(255, 255, 255), (int)StateColor::Normal);
+        sc.append(wxColour(255, 255, 255), (int)StateColor::Hovered);
+    } else {
+        if (Slic3r::GUI::wxGetApp().dark_mode()) {
+            // Dark mode inactive tabs: bright legible silver text, pure white on hover
+            sc.append(wxColour(220, 224, 230), (int)StateColor::Normal);
+            sc.append(wxColour(255, 255, 255), (int)StateColor::Hovered);
+        } else {
+            // Light mode inactive tabs: strong dark charcoal text, accent on hover
+            sc.append(wxColour(34, 38, 44), (int)StateColor::Normal);
+            sc.append(wxColour(0, 132, 194), (int)StateColor::Hovered);
+        }
+    }
+    sc.setNoDark(true);
+    return sc;
+}
+
+static StateColor notebook_tab_bg_color(bool selected)
+{
+    StateColor sc;
+    if (selected) {
+        // Vibrant sky blue matching Flashforge active tab
+        wxColour active_clr("#00A3ED");
+        sc.append(active_clr, (int)StateColor::Normal);
+        sc.append(active_clr, (int)StateColor::Hovered);
+    } else {
+        if (Slic3r::GUI::wxGetApp().dark_mode()) {
+            sc.append(wxColour("#2A2E33"), (int)StateColor::Normal);
+            sc.append(wxColour("#383E46"), (int)StateColor::Hovered);
+        } else {
+            sc.append(wxColour("#F0F2F5"), (int)StateColor::Normal);
+            sc.append(wxColour("#E2E6EB"), (int)StateColor::Hovered);
+        }
+    }
+    sc.setNoDark(true);
+    return sc;
+}
+
+static StateColor notebook_tab_border_color(bool selected)
+{
+    StateColor sc;
+    if (selected) {
+        wxColour active_clr("#00A3ED");
+        sc.append(active_clr, (int)StateColor::Normal);
+        sc.append(active_clr, (int)StateColor::Hovered);
+    } else {
+        if (Slic3r::GUI::wxGetApp().dark_mode()) {
+            sc.append(wxColour("#3F454D"), (int)StateColor::Normal);
+            sc.append(wxColour("#58626E"), (int)StateColor::Hovered);
+        } else {
+            sc.append(wxColour("#CCD1D7"), (int)StateColor::Normal);
+            sc.append(wxColour("#AAB2BC"), (int)StateColor::Hovered);
+        }
+    }
+    sc.setNoDark(true);
+    return sc;
 }
 
 ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
@@ -31,18 +85,16 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
 #endif //__WINDOWS__
 
     wxColour default_btn_bg;
-#ifdef __APPLE__
-    default_btn_bg = wxColour("#EDEDED"); // Gradient #414B4E
-#else
-    default_btn_bg = wxColour("#EDEDED"); // Gradient #414B4E
-#endif
+    if (Slic3r::GUI::wxGetApp().dark_mode()) {
+        default_btn_bg = wxColour("#1E2124");
+    } else {
+        default_btn_bg = wxColour("#E0E3E7");
+    }
 
-   
     SetBackgroundColour(default_btn_bg);
 
-    int em = em_unit(this);// Slic3r::GUI::wxGetApp().em_unit();
-    // BBS: no gap
-    m_btn_margin = 0; // std::lround(0.3 * em);
+    int em = em_unit(this);
+    m_btn_margin = FromDIP(3);
     m_line_margin = std::lround(0.1 * em);
 
     m_main_sizer = new wxBoxSizer(wxVERTICAL);
@@ -62,6 +114,7 @@ ButtonsListCtrl::ButtonsListCtrl(wxWindow *parent, wxBoxSizer* side_tools) :
             wxWindow* item_win = item->GetWindow();
             if (item_win) {
                 item_win->Reparent(this);
+                item_win->SetBackgroundColour(this->GetBackgroundColour());
             }
         }
         m_sizer->Add(side_tools, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT | wxBOTTOM, m_btn_margin);
@@ -120,17 +173,19 @@ void ButtonsListCtrl::Rescale()
     int em = em_unit(this);
     for (size_t idx = 0; idx < m_pageButtons.size(); ++idx) {
         Button* btn = m_pageButtons[idx];
-        //BBS
-        btn->SetMinSize({(btn->GetLabel().empty() ? 40 : 132) * em / 10, 36 * em / 10});
-        btn->SetTextColor(notebook_tab_text_color((int) idx == m_selection));
+        bool is_sel = ((int) idx == m_selection);
+        btn->SetMinSize({(btn->GetLabel().empty() ? 40 : 136) * em / 10, 36 * em / 10});
+        btn->SetCornerRadius(FromDIP(4));
+        btn->SetBorderWidth(FromDIP(1));
+        btn->SetBorderColor(notebook_tab_border_color(is_sel));
+        btn->SetBackgroundColor(notebook_tab_bg_color(is_sel));
+        btn->SetTextColor(notebook_tab_text_color(is_sel));
         btn->Rescale();
     }
 
-    // BBS: no gap
-    //m_btn_margin = std::lround(0.3 * em);
-    //m_line_margin = std::lround(0.1 * em);
-    //m_buttons_sizer->SetVGap(m_btn_margin);
-    //m_buttons_sizer->SetHGap(m_btn_margin);
+    m_btn_margin = FromDIP(3);
+    m_buttons_sizer->SetVGap(m_btn_margin);
+    m_buttons_sizer->SetHGap(m_btn_margin);
 
     m_main_sizer->Layout();
 }
@@ -139,44 +194,38 @@ void ButtonsListCtrl::SetSelection(int sel)
 {
     if (m_selection == sel)
         return;
-    // BBS: change button color
-    wxColour selected_btn_bg("#009688");    // Gradient #009688
-    if (m_selection >= 0) {
-        StateColor bg_color = StateColor(
-        std::pair{wxColour(245, 245, 245), (int) StateColor::Hovered},
-        std::pair{wxColour(237, 237, 237), (int) StateColor::Normal});
-        m_pageButtons[m_selection]->SetBackgroundColor(bg_color);
+    if (m_selection >= 0 && m_selection < (int)m_pageButtons.size()) {
+        m_pageButtons[m_selection]->SetBackgroundColor(notebook_tab_bg_color(false));
+        m_pageButtons[m_selection]->SetBorderColor(notebook_tab_border_color(false));
         m_pageButtons[m_selection]->SetSelected(false);
         m_pageButtons[m_selection]->SetTextColor(notebook_tab_text_color(false));
     }
     m_selection = sel;
 
-    StateColor bg_color = StateColor(
-        std::pair{wxColour(0, 163, 237), (int) StateColor::Hovered},
-        std::pair{wxColour(0, 163, 237), (int) StateColor::Normal});
-    m_pageButtons[m_selection]->SetBackgroundColor(bg_color);
+    if (m_selection >= 0 && m_selection < (int)m_pageButtons.size()) {
+        m_pageButtons[m_selection]->SetBackgroundColor(notebook_tab_bg_color(true));
+        m_pageButtons[m_selection]->SetBorderColor(notebook_tab_border_color(true));
+        m_pageButtons[m_selection]->SetSelected(true);
+        m_pageButtons[m_selection]->SetTextColor(notebook_tab_text_color(true));
+    }
 
-    m_pageButtons[m_selection]->SetSelected(true);
-    m_pageButtons[m_selection]->SetTextColor(notebook_tab_text_color(true));
-    
     Refresh();
 }
 
 bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /* = false*/, const std::string &bmp_name /* = ""*/, const std::string &inactive_bmp_name)
 {
     Button * btn = new Button(this, text.empty() ? text : " " + text, bmp_name, wxNO_BORDER);
-    btn->SetCornerRadius(0);
+    btn->SetCornerRadius(FromDIP(4));
+    btn->SetBorderWidth(FromDIP(1));
     btn->SetInactiveHover(true);
+    btn->SetFont(Label::Head_13);
 
     int em = em_unit(this);
     //BBS set size for button
     btn->SetMinSize({(text.empty() ? 40 : 136) * em / 10, 36 * em / 10});
 
-    StateColor bg_color = StateColor(
-        std::pair{wxColour(245, 245, 245), (int) StateColor::Hovered},
-        std::pair{wxColour(237, 237, 237), (int) StateColor::Normal});
-
-    btn->SetBackgroundColor(bg_color);
+    btn->SetBorderColor(notebook_tab_border_color(bSelect));
+    btn->SetBackgroundColor(notebook_tab_bg_color(bSelect));
     btn->SetTextColor(notebook_tab_text_color(bSelect));
     btn->SetInactiveIcon(inactive_bmp_name);
     btn->SetSelected(bSelect);
@@ -191,7 +240,6 @@ bool ButtonsListCtrl::InsertPage(size_t n, const wxString &text, bool bSelect /*
             wxPostEvent(this->GetParent(), evt);
         }
     });
-    Slic3r::GUI::wxGetApp().UpdateDarkUI(btn);
     m_pageButtons.insert(m_pageButtons.begin() + n, btn);
     m_pageLabels.insert(m_pageLabels.begin() + n, text); // ORCA
     m_buttons_sizer->Insert(n, new wxSizerItem(btn));

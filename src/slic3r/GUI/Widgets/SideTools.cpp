@@ -21,7 +21,7 @@ namespace Slic3r { namespace GUI {
     SetMaxSize(wxSize(-1, FromDIP(50)));
 
     Bind(wxEVT_PAINT, &SideToolsPanel::OnPaint, this);
-    SetBackgroundColour(wxColour("#FEFFFF"));
+    SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#222528") : wxColour("#FEFFFF"));
 
     m_printing_img = ScalableBitmap(this, "printer", 16);
     m_arrow_img    = ScalableBitmap(this, "monitor_arrow", 14);
@@ -209,7 +209,7 @@ void SideToolsPanel::doRender(wxDC &dc)
     }
 
     if (m_hover) {
-        dc.SetPen(SIDE_TOOLS_BRAND);
+        dc.SetPen(StateColor::darkModeColorFor(SIDE_TOOLS_BRAND));
         dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawRectangle(0, 0, size.x, size.y);
     }
@@ -253,7 +253,7 @@ void SideToolsPanel::on_mouse_leave(wxMouseEvent &evt)
 SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
 {
     wxPanel::Create(parent, id, pos, size);
-    SetBackgroundColour(wxColour("#FEFFFF"));
+    SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#222528") : wxColour("#FEFFFF"));
 
     m_side_tools = new SideToolsPanel(this, wxID_ANY);
 
@@ -310,7 +310,7 @@ SideTools::SideTools(wxWindow *parent, wxWindowID id, const wxPoint &pos, const 
     connection_sizer_V->Fit(m_connection_info);
 
     m_side_error_panel = new wxWindow(this, wxID_ANY);
-    m_side_error_panel->SetBackgroundColour(wxColour(255, 232, 214));
+    m_side_error_panel->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#3E2D25") : wxColour(255, 232, 214));
     m_side_error_panel->SetMinSize(wxSize(-1, -1));
     m_side_error_panel->SetMaxSize(wxSize(-1, -1));
 

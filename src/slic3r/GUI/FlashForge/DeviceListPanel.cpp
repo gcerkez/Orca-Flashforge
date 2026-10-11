@@ -26,15 +26,21 @@ constexpr auto FF_DEVICE_LIST_MUTED_TEXT     = "#909090";
 
 void apply_light_mode_text(wxWindow* window, const wxColour& color)
 {
-#ifdef __APPLE__
     if (!window) {
         return;
     }
-    window->SetForegroundColour(color);
-#else
-    (void) window;
-    (void) color;
-#endif
+    if (GUI_App::dark_mode()) {
+        if (color == wxColour(FF_DEVICE_LIST_PRIMARY_TEXT))
+            window->SetForegroundColour(wxColour("#E4E7EB"));
+        else if (color == wxColour(FF_DEVICE_LIST_SECONDARY_TEXT))
+            window->SetForegroundColour(wxColour("#9DA4AE"));
+        else if (color == wxColour(FF_DEVICE_LIST_MUTED_TEXT))
+            window->SetForegroundColour(wxColour("#767E89"));
+        else
+            window->SetForegroundColour(wxColour("#E4E7EB"));
+    } else {
+        window->SetForegroundColour(color);
+    }
 }
 
 }
@@ -126,6 +132,17 @@ std::map<unsigned short, wxBitmap> DeviceItemPanel::m_machineBitmapMap;
 DeviceItemPanel::DeviceItemPanel(wxWindow *parent) 
     : wxPanel(parent)
 {
+    if (GUI_App::dark_mode()) {
+        m_bg_color = wxColour("#2D3238");
+        m_border_color = wxColour("#3D444C");
+        m_border_hover_color = wxColour("#00A3ED");
+        m_border_press_color = wxColour("#0084C2");
+    } else {
+        m_bg_color = wxColour("#FFFFFF");
+        m_border_color = wxColour("#E0E3E7");
+        m_border_hover_color = wxColour("#999999");
+        m_border_press_color = wxColour("#328DFB");
+    }
     SetSize(FromDIP(220), FromDIP(205));
     SetMinSize(wxSize(FromDIP(220), FromDIP(205)));
     SetMaxSize(wxSize(FromDIP(220), FromDIP(205)));
@@ -554,10 +571,10 @@ DeviceStaticItemPanel::DeviceStaticItemPanel(wxWindow* parent, std::string statu
     wxString wxstatus = FFUtils::convertStatus(m_status, color);
     m_status_text = new wxStaticText(this, wxID_ANY, wxstatus, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
     m_status_text->SetForegroundColour(color);
-    m_status_text->SetBackgroundColour(wxColour("#ffffff"));
+    m_status_text->SetBackgroundColour(m_bg_color);
     m_count_text = new wxStaticText(this, wxID_ANY, wxString::Format("%d", m_count), wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER);
     m_count_text->SetFont(::Label::Head_18);
-    m_count_text->SetBackgroundColour(wxColour("#ffffff"));
+    m_count_text->SetBackgroundColour(m_bg_color);
     apply_light_mode_text(m_count_text, wxColour(FF_DEVICE_LIST_PRIMARY_TEXT));
 
     m_main_sizer->AddStretchSpacer(1);
@@ -669,12 +686,8 @@ void DeviceListPanel::build()
     m_default_filter_item = new DeviceFilterItem(m_filter_popup, _L("All"), true);
     m_default_filter_item->Bind(EVT_DEVICE_FILTER_ITEM_CLICKED, &DeviceListPanel::onFilterItemClicked, this);
     m_default_filter_item->Show(false);
-#ifdef __APPLE__
-    const wxColour device_page_bg("#EDEDED");
+    const wxColour device_page_bg = GUI_App::dark_mode() ? wxColour("#22262A") : wxColour("#EDEDED");
     SetBackgroundColour(device_page_bg);
-#else
-    SetBackgroundColour(wxColour("#F0F0F0"));
-#endif
     m_placement_btn = new DropDownButton(this, _L("All"), create_scaled_bitmap("device_dropdown", this, 8));
     m_status_btn  = new DropDownButton(this, _L("Status"), create_scaled_bitmap("device_dropdown", this, 8));
     m_type_btn = new DropDownButton(this, _L("Machine Type"), create_scaled_bitmap("device_dropdown", this, 8));
@@ -692,7 +705,7 @@ void DeviceListPanel::build()
     m_static_btn->SetValue(false);
 
     wxPanel *lan_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(1, -1));
-    lan_line->SetBackgroundColour("#666666");
+    lan_line->SetBackgroundColour(GUI_App::dark_mode() ? wxColour("#3D444C") : wxColour("#C0C5CC"));
 
     wxBoxSizer* hTopSizer = new wxBoxSizer(wxHORIZONTAL);
     hTopSizer->Add(m_placement_btn, 0, wxALIGN_CENTER_VERTICAL | wxALIGN_LEFT);
@@ -755,14 +768,12 @@ void DeviceListPanel::build()
     });
 
     m_simple_book = new wxSimplebook(this);
-#ifdef __APPLE__
     m_simple_book->SetBackgroundColour(device_page_bg);
-#endif
+
     // no device panel
     m_no_device_panel = new wxPanel(m_simple_book);
-#ifdef __APPLE__
     m_no_device_panel->SetBackgroundColour(device_page_bg);
-#endif
+
     m_no_device_bitmap = new wxStaticBitmap(m_no_device_panel, wxID_ANY, wxNullBitmap, wxDefaultPosition, wxDefaultSize, 0);
     m_no_device_bitmap->SetBitmap(create_scaled_bitmap("monitor_device_empty", nullptr, 250));
     m_no_device_staticText = new wxStaticText(m_no_device_panel, wxID_ANY, wxT("No Device"));
@@ -783,14 +794,12 @@ void DeviceListPanel::build()
     m_simple_book->AddPage(m_no_device_panel, wxEmptyString, true);
 
     m_device_scrolled_window = new wxScrolledWindow(m_simple_book, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxHSCROLL | wxVSCROLL);
-#ifdef __APPLE__
     m_device_scrolled_window->SetBackgroundColour(device_page_bg);
-#endif
+
     m_device_scrolled_window->SetScrollRate(50, 50);
     m_device_panel = new wxPanel(m_device_scrolled_window);
-#ifdef __APPLE__
     m_device_panel->SetBackgroundColour(device_page_bg);
-#endif
+
     wxBoxSizer* scroll_sizer = new wxBoxSizer(wxVERTICAL);
     scroll_sizer->AddSpacer(FromDIP(30));
     scroll_sizer->Add(m_device_panel, 1, wxEXPAND | wxLEFT | wxRIGHT, FromDIP(30));
@@ -808,7 +817,7 @@ void DeviceListPanel::build()
     m_simple_book->AddPage(m_device_scrolled_window, wxEmptyString, false);
 
     wxPanel *hor_line = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(-1, 1));
-    hor_line->SetBackgroundColour("#ffffff");
+    hor_line->SetBackgroundColour(GUI_App::dark_mode() ? wxColour("#3D444C") : wxColour("#D5D9DE"));
     wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
     sizer->AddSpacer(FromDIP(10));
     sizer->Add(hTopSizer, 0, wxEXPAND | wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT, FromDIP(30));

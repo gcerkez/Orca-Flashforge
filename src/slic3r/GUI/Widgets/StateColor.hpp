@@ -53,7 +53,7 @@ public:
 
     // operator==
     bool operator==(StateColor const& other) const{
-        return statesList_ == other.statesList_ && colors_ == other.colors_ && takeFocusedAsHovered_ == other.takeFocusedAsHovered_;
+        return statesList_ == other.statesList_ && colors_ == other.colors_ && takeFocusedAsHovered_ == other.takeFocusedAsHovered_ && no_dark_ == other.no_dark_;
     };
 
     // operator!=
@@ -70,6 +70,9 @@ public:
 
     void clear();
 
+    void setNoDark(bool set = true) { no_dark_ = set; }
+    bool getNoDark() const { return no_dark_; }
+
 public:
     int count() const { return statesList_.size(); }
 
@@ -80,7 +83,7 @@ public:
 
     wxColour colorForStates(int states) const;
 
-    wxColour colorForStatesNoDark(int states);
+    wxColour colorForStatesNoDark(int states) const;
 
     int colorIndexForStates(int states);
 
@@ -107,6 +110,7 @@ private:
     std::vector<int> statesList_;
     std::vector<wxColour> colors_;
     bool takeFocusedAsHovered_ = true;
+    bool no_dark_ = false;
 };
 
 #endif // !slic3r_GUI_StateColor_hpp_

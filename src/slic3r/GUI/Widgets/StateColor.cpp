@@ -261,6 +261,9 @@ wxColour StateColor::defaultColor() {
 
 wxColour StateColor::colorForStates(int states) const
 {
+    if (no_dark_) {
+        return colorForStatesNoDark(states);
+    }
     bool focused = takeFocusedAsHovered_ && (states & Focused);
     for (int i = 0; i < statesList_.size(); ++i) {
         int s = statesList_[i];
@@ -280,7 +283,7 @@ wxColour StateColor::colorForStates(int states) const
     return wxColour(0, 0, 0, 0);
 }
 
-wxColour StateColor::colorForStatesNoDark(int states)
+wxColour StateColor::colorForStatesNoDark(int states) const
 {
     bool focused = takeFocusedAsHovered_ && (states & Focused);
     for (int i = 0; i < statesList_.size(); ++i) {

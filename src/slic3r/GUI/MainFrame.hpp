@@ -449,7 +449,8 @@ public:
     
     mutable int m_print_select{ ePrintAll };
     mutable int m_slice_select{ eSliceAll };
-    // Button* m_publish_btn{ nullptr };
+    wxPanel*    m_slice_panel{ nullptr };
+    wxPanel*    m_print_panel{ nullptr };
     SideButton* m_slice_btn{ nullptr };
     SideButton* m_slice_option_btn{ nullptr };
     SideButton* m_print_btn{ nullptr };

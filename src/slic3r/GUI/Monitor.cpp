@@ -44,7 +44,7 @@ namespace GUI {
 AddMachinePanel::AddMachinePanel(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style, const wxString& name)
     : wxPanel(parent, id, pos, size, style)
 {
-    this->SetBackgroundColour(0xEEEEEE);
+    this->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#22262A") : wxColour(0xEEEEEE));
 
     wxBoxSizer* topsizer = new wxBoxSizer(wxVERTICAL);
 
@@ -62,17 +62,18 @@ AddMachinePanel::AddMachinePanel(wxWindow* parent, wxWindowID id, const wxPoint&
     m_button_add_machine = new Button(this, "", "monitor_add_machine", FromDIP(24));
     m_button_add_machine->SetCornerRadius(FromDIP(12));
     StateColor button_bg(
-        std::pair<wxColour, int>(0xCECECE, StateColor::Pressed),
-        std::pair<wxColour, int>(0xCECECE, StateColor::Hovered),
+        std::pair<wxColour, int>(wxGetApp().dark_mode() ? wxColour("#383E46") : wxColour(0xCECECE), StateColor::Pressed),
+        std::pair<wxColour, int>(wxGetApp().dark_mode() ? wxColour("#353B42") : wxColour(0xCECECE), StateColor::Hovered),
         std::pair<wxColour, int>(this->GetBackgroundColour(), StateColor::Normal)
     );
+    button_bg.setNoDark(true);
     m_button_add_machine->SetBackgroundColor(button_bg);
-    m_button_add_machine->SetBorderColor(0x909090);
+    m_button_add_machine->SetBorderColor(wxGetApp().dark_mode() ? wxColour("#48505A") : wxColour(0x909090));
     m_button_add_machine->SetMinSize(wxSize(96, 39));
     btn_sizer->Add(m_button_add_machine, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
     m_staticText_add_machine = new wxStaticText(this, wxID_ANY, _L("click to add machine"), wxDefaultPosition, wxDefaultSize, 0);
     m_staticText_add_machine->Wrap(-1);
-    m_staticText_add_machine->SetForegroundColour(0x909090);
+    m_staticText_add_machine->SetForegroundColour(wxGetApp().dark_mode() ? wxColour("#A0A6AD") : wxColour(0x909090));
     btn_sizer->Add(m_staticText_add_machine, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, 5);
 
     horiz_sizer->Add(btn_sizer);
@@ -199,7 +200,7 @@ void MonitorPanel::init_tabpanel()
     sizer_side_tools->Add(m_side_tools, 1, wxEXPAND, 0);
     m_tabpanel             = new Tabbook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, sizer_side_tools, wxNB_LEFT | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
     m_side_tools->set_table_panel(m_tabpanel);
-    m_tabpanel->SetBackgroundColour(wxColour("#FEFFFF"));
+    m_tabpanel->SetBackgroundColour(wxGetApp().dark_mode() ? wxColour("#22262A") : wxColour("#FEFFFF"));
     m_tabpanel->Bind(wxEVT_BOOKCTRL_PAGE_CHANGED, [this](wxBookCtrlEvent& e) {
         auto page = m_tabpanel->GetCurrentPage();
         //if (page == m_media_file_panel) {
