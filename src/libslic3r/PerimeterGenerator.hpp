@@ -20,6 +20,11 @@ struct FuzzySkinConfig
     double        noise_scale;
     int           noise_octaves;
     double        noise_persistence;
+    FuzzySkinMode mode;
+    int           ripples_per_layer;
+    double        ripple_offset;
+    int           layers_between_ripple_offset;
+    int           layer_id;
 
     bool operator==(const FuzzySkinConfig& r) const
     {
@@ -30,7 +35,11 @@ struct FuzzySkinConfig
             && noise_type == r.noise_type
             && noise_scale == r.noise_scale
             && noise_octaves == r.noise_octaves
-            && noise_persistence == r.noise_persistence;
+            && noise_persistence == r.noise_persistence
+            && mode == r.mode
+            && ripples_per_layer == r.ripples_per_layer
+            && ripple_offset == r.ripple_offset
+            && layers_between_ripple_offset == r.layers_between_ripple_offset;
     }
 
     bool operator!=(const FuzzySkinConfig& r) const { return !(*this == r); }
@@ -50,6 +59,10 @@ template<> struct hash<Slic3r::FuzzySkinConfig>
         boost::hash_combine(seed, std::hash<double>{}(c.noise_scale));
         boost::hash_combine(seed, std::hash<int>{}(c.noise_octaves));
         boost::hash_combine(seed, std::hash<double>{}(c.noise_persistence));
+        boost::hash_combine(seed, std::hash<Slic3r::FuzzySkinMode>{}(c.mode));
+        boost::hash_combine(seed, std::hash<int>{}(c.ripples_per_layer));
+        boost::hash_combine(seed, std::hash<double>{}(c.ripple_offset));
+        boost::hash_combine(seed, std::hash<int>{}(c.layers_between_ripple_offset));
         return seed;
     }
 };
@@ -87,13 +100,11 @@ public:
     std::vector<Polygons>       m_lower_polygons_series;
     std::vector<Polygons>       m_external_lower_polygons_series;
     std::vector<Polygons>       m_smaller_external_lower_polygons_series;
-    std::pair<double, double>   m_lower_overhang_dist_boundary;
-    std::pair<double, double>   m_external_overhang_dist_boundary;
-    std::pair<double, double>   m_smaller_external_overhang_dist_boundary;
 
-    bool                                            has_fuzzy_skin = false;
-    bool                                            has_fuzzy_hole = false;
-    std::unordered_map<FuzzySkinConfig, ExPolygons> regions_by_fuzzify;
+    bool                                           has_fuzzy_skin = false;
+    bool                                           has_fuzzy_hole = false;
+    // Preserve construction order so overlap precedence remains deterministic.
+    std::vector<std::pair<FuzzySkinConfig, ExPolygons>> regions_by_fuzzify;
     
     PerimeterGenerator(
         // Input:
@@ -142,7 +153,6 @@ private:
     void split_top_surfaces(const ExPolygons &orig_polygons, ExPolygons &top_fills, ExPolygons &non_top_polygons, ExPolygons &fill_clip) const;
     void apply_extra_perimeters(ExPolygons& infill_area);
     void process_no_bridge(Surfaces& all_surfaces, coord_t perimeter_spacing, coord_t ext_perimeter_width);
-    std::pair<double, double> dist_boundary(double width);
 
 private:
     bool        m_spiral_vase;

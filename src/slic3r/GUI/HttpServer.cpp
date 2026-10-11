@@ -3,9 +3,23 @@
 #include "GUI_App.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "slic3r/Utils/NetworkAgent.hpp"
+#include "slic3r/Utils/FlashCloudServiceAgent.hpp"
 
 namespace Slic3r {
 namespace GUI {
+
+namespace {
+
+bool uses_flash_cloud_agent(const NetworkAgent* agent)
+{
+    if (agent == nullptr)
+        return false;
+
+    const auto cloud_agent = agent->get_cloud_agent();
+    return dynamic_cast<FlashCloudServiceAgent*>(cloud_agent.get()) != nullptr;
+}
+
+} // namespace
 
 std::string url_get_param(const std::string& url, const std::string& key)
 {
@@ -145,18 +159,27 @@ void HttpServer::IOServer::stop_all()
 
 HttpServer::HttpServer(boost::asio::ip::port_type port) : port(port) {}
 
+HttpServer::~HttpServer()
+{
+    stop();
+}
+
 void HttpServer::start()
 {
+    if (start_http_server)
+        return;
+
     BOOST_LOG_TRIVIAL(info) << "start_http_service...";
-    start_http_server    = true;
-    m_http_server_thread = create_thread([this] {
+    server_             = std::make_unique<IOServer>(*this);
+    IOServer* io_server = server_.get();
+    start_http_server   = true;
+    m_http_server_thread = create_thread([io_server] {
         set_current_thread_name("http_server");
-        server_ = std::make_unique<IOServer>(*this);
-        server_->acceptor.listen();
+        io_server->acceptor.listen();
 
-        server_->do_accept();
+        io_server->do_accept();
 
-        server_->io_service.run();
+        io_server->io_service.run();
     });
 }
 
@@ -164,9 +187,14 @@ void HttpServer::stop()
 {
     start_http_server = false;
     if (server_) {
-        server_->acceptor.close();
-        server_->stop_all();
-        server_->io_service.stop();
+        IOServer* io_server = server_.get();
+        boost::asio::post(io_server->io_service, [io_server] {
+            boost::system::error_code ec;
+            io_server->acceptor.cancel(ec);
+            io_server->acceptor.close(ec);
+            io_server->stop_all();
+            io_server->io_service.stop();
+        });
     }
     if (m_http_server_thread.joinable())
         m_http_server_thread.join();
@@ -182,6 +210,43 @@ std::shared_ptr<HttpServer::Response> HttpServer::bbl_auth_handle_request(const 
 {
     BOOST_LOG_TRIVIAL(info) << "thirdparty_login: get_response";
 
+    const std::string auth_code = url_get_param(url, "code");
+    if (!auth_code.empty()) {
+        std::string state = url_get_param(url, "state");
+        NetworkAgent* agent = wxGetApp().getAgent();
+        if (!agent || uses_flash_cloud_agent(agent)) {
+            BOOST_LOG_TRIVIAL(warning) << "Reject BBL auth callback for FlashCloudServiceAgent";
+            return std::make_shared<ResponseNotFound>();
+        }
+
+        json payload;
+        payload["command"] = "user_login";
+        payload["data"]["code"] = auth_code;
+        payload["data"]["state"] = state;
+
+        agent->change_user(payload.dump());
+        const bool login_ok = agent->is_user_login();
+        if (login_ok) {
+            wxGetApp().request_user_login(1);
+            GUI::wxGetApp().CallAfter([] { wxGetApp().ShowUserLogin(false); });
+        }
+
+        const std::string title = login_ok ? "Authentication complete" : "Authentication failed";
+        const std::string message = login_ok
+            ? "You can return to OrcaSlicer. This window will close automatically."
+            : "Something went wrong. Please return to OrcaSlicer and try again.";
+        const std::string html =
+            "<html><head><meta charset=\"utf-8\">"
+            "<style>body{font-family:Arial,sans-serif;background:#f7f7f7;color:#222;margin:32px;}"
+            "a.button{display:inline-block;padding:10px 16px;margin-top:12px;background:#0f8bff;color:#fff;text-decoration:none;border-radius:6px;}"
+            "</style></head><body><div class=\"container\">"
+            "<h2>" + title + "</h2>"
+            "<p>" + message + "</p>"
+            "<script>setTimeout(function(){try{window.close();}catch(e){}},1500);</script>"
+            "</div></body></html>";
+        return std::make_shared<ResponseHtml>(html);
+    }
+
     if (boost::contains(url, "access_token")) {
         std::string   redirect_url           = url_get_param(url, "redirect_url");
         std::string   access_token           = url_get_param(url, "access_token");
@@ -189,6 +254,10 @@ std::shared_ptr<HttpServer::Response> HttpServer::bbl_auth_handle_request(const 
         std::string   expires_in_str         = url_get_param(url, "expires_in");
         std::string   refresh_expires_in_str = url_get_param(url, "refresh_expires_in");
         NetworkAgent* agent                  = wxGetApp().getAgent();
+        if (!agent || uses_flash_cloud_agent(agent)) {
+            BOOST_LOG_TRIVIAL(warning) << "Reject token auth callback for FlashCloudServiceAgent";
+            return std::make_shared<ResponseNotFound>();
+        }
 
         unsigned int http_code;
         std::string  http_body;
@@ -249,13 +318,32 @@ void HttpServer::ResponseNotFound::write_response(std::stringstream& ssOut)
 
 void HttpServer::ResponseRedirect::write_response(std::stringstream& ssOut)
 {
-    const std::string sHTML = "<html><body><p>redirect to url </p></body></html>";
+    const std::string sHTML =
+        "<html><head><meta charset=\"utf-8\">"
+        "<meta http-equiv=\"refresh\" content=\"0;url=" + location_str + "\">"
+        "<style>body{font-family:Arial,sans-serif;background:#f7f7f7;color:#222;margin:32px;}"
+        "a.button{display:inline-block;padding:10px 16px;margin-top:12px;background:#0f8bff;color:#fff;text-decoration:none;border-radius:6px;}"
+        "</style></head><body><div class=\"container\">"
+        "<h2>Authentication complete</h2>"
+        "<p>You can return to OrcaSlicer. If your browser does not redirect automatically, use the button below.</p>"
+        "<a class=\"button\" href=\"" + location_str + "\">Continue</a>"
+        "<script>setTimeout(function(){try{window.close();}catch(e){}},1500);</script>"
+        "</div></body></html>";
     ssOut << "HTTP/1.1 302 Found" << std::endl;
     ssOut << "Location: " << location_str << std::endl;
     ssOut << "content-type: text/html" << std::endl;
     ssOut << "content-length: " << sHTML.length() << std::endl;
     ssOut << std::endl;
     ssOut << sHTML;
+}
+
+void HttpServer::ResponseHtml::write_response(std::stringstream& ssOut)
+{
+    ssOut << "HTTP/1.1 200 OK" << std::endl;
+    ssOut << "content-type: text/html" << std::endl;
+    ssOut << "content-length: " << html.length() << std::endl;
+    ssOut << std::endl;
+    ssOut << html;
 }
 
 } // GUI

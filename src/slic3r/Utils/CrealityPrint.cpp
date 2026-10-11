@@ -23,6 +23,7 @@
 #include "Http.hpp"
 #include "libslic3r/AppConfig.hpp"
 #include "Bonjour.hpp"
+#include "WebSocketUtils.hpp"
 #include "slic3r/GUI/BonjourDialog.hpp"
 
 #include <boost/beast/core.hpp>
@@ -207,6 +208,8 @@ void CrealityPrint::start_print(const std::string &filename) const
         auto ep = net::connect(ws.next_layer(), results);
 
         host += ':' + std::to_string(ep.port());
+
+        enable_websocket_permessage_deflate(ws);
 
         ws.set_option(websocket::stream_base::decorator(
             [](websocket::request_type& req)
