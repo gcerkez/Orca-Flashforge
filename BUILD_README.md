@@ -58,6 +58,14 @@ The checked-out branch `linux-fixes-1.7.15` and our build incorporates the follo
     - Added container detection for `/run/.containerenv` (Podman / Distrobox) and `$container` in addition to `/.dockerenv`.
     - Patches `appimagetool` magic bytes and runs with `--appimage-extract-and-run` inside containers without requiring host FUSE permissions.
 
+12. **Prepare Tab 3D Canvas Rendering Restoration (`src/slic3r/GUI/GUI_App.cpp`, `src/slic3r/GUI/GLCanvas3D.cpp`)**:
+    - During startup in `GUI_App::post_init()`, `plater_->canvas3D()->enable_render(false)` was called to suppress rendering during early initialization.
+    - On Linux/Wayland, `IsShownOnScreen()` evaluated to `false` during the initial idle cycle before the window was realized and mapped by GTK, taking the `Found glcontext not ready, postpone the init` branch. In that branch, `enable_render(true)` was never called, leaving `m_enable_render == false` for the entire lifetime of the process.
+    - Consequently, `GLCanvas3D::render()` for `view3D` (Prepare tab) exited immediately on line `if (!m_enable_render) return;`, rendering nothing in the 3D GL pane.
+    - Fixed by restoring `enable_render(true)` and calling `set_as_dirty()` in the postponed branch and after tab selection in `post_init()`.
+    - Added auto-recovery in `GLCanvas3D::render()` so that whenever `_is_shown_on_screen()` is true, `m_enable_render` is automatically restored to `true`.
+    - Updated `SwapBuffers()` to guard with `_is_shown_on_screen()` consistently.
+
 ---
 
 ## 2. Prerequisites

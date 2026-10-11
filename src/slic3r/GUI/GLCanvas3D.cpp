@@ -1911,8 +1911,12 @@ void GLCanvas3D::render(bool only_init)
         return;
 
     //BBS: add enable_render
-    if (!m_enable_render)
-        return;
+    if (!m_enable_render) {
+        if (_is_shown_on_screen())
+            m_enable_render = true;
+        else
+            return;
+    }
 
     // ensures this canvas is current and initialized
     if (!_is_shown_on_screen() || !_set_current() || !wxGetApp().init_opengl())
@@ -2173,7 +2177,7 @@ void GLCanvas3D::render(bool only_init)
 
     // On Wayland, eglSwapBuffers blocks when the canvas is hidden or
     // occluded. Skip the swap to avoid stalling the render loop.
-    if (m_canvas->IsShownOnScreen()) {
+    if (_is_shown_on_screen()) {
         m_canvas->SwapBuffers();
         m_render_stats.increment_fps_counter();
     }

@@ -1075,6 +1075,8 @@ void GUI_App::post_init()
         }
         else {
             BOOST_LOG_TRIVIAL(warning) << __FUNCTION__ << "Found glcontext not ready, postpone the init";
+            plater_->canvas3D()->enable_render(true);
+            plater_->canvas3D()->set_as_dirty();
         }
 //#endif
         if (is_editor())
@@ -1084,6 +1086,7 @@ void GUI_App::post_init()
 #ifndef __linux__
         mainframe->Thaw();
 #endif
+        plater_->canvas3D()->enable_render(true);
         BOOST_LOG_TRIVIAL(info) << __FUNCTION__ << ", end load_gl_resources";
     }
 
