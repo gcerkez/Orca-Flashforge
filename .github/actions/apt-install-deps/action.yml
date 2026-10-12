@@ -7,5 +7,6 @@ runs:
       shell: bash
       run: |
         mkdir -p ${{ github.workspace }}/deps/build
+        sudo apt-get install -y libfuse2t64 || sudo apt-get install -y libfuse2 || true
         sudo env "ORCA_UPDATER_SIG_KEY=$ORCA_UPDATER_SIG_KEY" ./build_linux.sh -ur
         sudo chown $USER -R ./

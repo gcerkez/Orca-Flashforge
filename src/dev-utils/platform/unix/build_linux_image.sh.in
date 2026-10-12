@@ -148,6 +148,8 @@ echo -n "Creating Appimage for distribution..."
     else
 	# Leave files on failure so you can debug.
 	popd > /dev/null
+	echo "Error: build_appimage.sh failed." >&2
+	exit 1
     fi
 #} &> $ROOT/Build.log # Capture all command output
 echo "done"

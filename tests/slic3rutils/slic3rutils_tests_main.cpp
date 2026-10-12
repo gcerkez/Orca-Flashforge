@@ -6,12 +6,13 @@
 #include <windows.h>
 #endif
 
-#include <catch2/catch_all.hpp>
-
+#include <wx/wx.h>
 #include "slic3r/GUI/DeviceCore/DevFilaSystem.h"
 #include "slic3r/GUI/FlashForge/FeedbackDeviceSelection.hpp"
 #include "slic3r/Utils/Http.hpp"
 #include "slic3r/Utils/OrcaCloudServiceAgent.hpp"
+
+#include <catch2/catch_all.hpp>
 
 namespace {
 
@@ -38,6 +39,7 @@ nlohmann::json nested_session_json(const nlohmann::json& metadata)
 
 std::string resolved_display_name(const nlohmann::json& session)
 {
+    wxInitializer wx_init;
     Slic3r::OrcaCloudServiceAgent agent("");
     REQUIRE(agent.set_user_session(session, false));
     return agent.get_user_nickname();

@@ -30,9 +30,7 @@ APP_IMAGE="@SLIC3R_APP_NAME@_${DISTRO_TAG}_V@Orca_Flashforge_VERSION@.AppImage"
 wget ${APPIMAGETOOLURL} -O ../appimagetool.AppImage
 chmod +x ../appimagetool.AppImage
 
-if [ -f /.dockerenv ] || [ -f /run/.containerenv ] || [ -n "${container}" ] ; then # Only run if inside of a Container
 sed '0,/AI\x02/{s|AI\x02|\x00\x00\x00|}' -i  ../appimagetool.AppImage
-fi
 
 sed -i -e 's#/usr#././#g' "bin/@SLIC3R_APP_CMD@"
 mv "@SLIC3R_APP_CMD@" AppRun
@@ -54,11 +52,7 @@ EOF
 
 export ARCH=$(uname -m)
 
-if [ -f /.dockerenv ] || [ -f /run/.containerenv ] || [ -n "${container}" ] ; then # Only run if inside of a Container
-  ../appimagetool.AppImage --appimage-extract-and-run .
-else
-  ../appimagetool.AppImage .
-fi
+../appimagetool.AppImage --appimage-extract-and-run .
 
 mv "@SLIC3R_APP_KEY@-$(uname -m).AppImage" "${APP_IMAGE}"
 chmod +x "${APP_IMAGE}"
