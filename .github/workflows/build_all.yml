@@ -124,7 +124,7 @@ jobs:
         timeout-minutes: 20
         run: |
           tar -xvf build_tests.tar
-          scripts/run_unit_tests.sh
+          bash scripts/run_unit_tests.sh
       - name: Upload Test Logs
         uses: actions/upload-artifact@v7
         if: ${{ failure() }}
