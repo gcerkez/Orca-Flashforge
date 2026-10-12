@@ -7,13 +7,15 @@ on:
      - release/*
     paths:
      - 'deps/**'
+     - 'deps_src/**'
      - 'src/**'
      - '**/CMakeLists.txt'
      - 'version.inc'
      - 'localization/**'
      - 'resources/**'
      - ".github/workflows/build_*.yml"
-     - 'scripts/flatpak/**'
+     - 'build_linux.sh'
+     - 'scripts/**'
 
   pull_request:
     branches:
